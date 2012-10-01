@@ -1,0 +1,25 @@
+#!/bin/bash
+
+BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+. $BASEDIR/conf/settings
+
+if [ -z "$(brctl show|grep $BRIDGE)" ]; then
+    if [ ! -d $BASEDIR/dhcp ]; then
+        mkdir $BASEDIR/dhcp
+    fi
+
+    brctl addbr $BRIDGE
+    ifconfig $BRIDGE $NET_PRIV_GW netmask $NET_PRIV_NETMASK
+
+    touch $BASEDIR/dhcp/dnsmasq.pid
+    dnsmasq -a $NET_PRIV_GW --log-facility=$BASEDIR/dhcp/dnsmasq.log -l $BASEDIR/dhcp/leases.txt -x $BASEDIR/dhcp/dnsmasq.pid -F $NET_PRIV_RANGE
+
+    iptables -t nat -A POSTROUTING -o $NET_OUT_IF -j MASQUERADE
+    iptables -A FORWARD -i $NET_OUT_IF -o $BRIDGE -m state --state RELATED,ESTABLISHED -j ACCEPT
+    iptables -A FORWARD -i $BRIDGE -o $NET_OUT_IF -j ACCEPT
+
+    ethtool -K $BRIDGE tx off
+
+    echo 1 > /proc/sys/net/ipv4/ip_forward
+fi
+

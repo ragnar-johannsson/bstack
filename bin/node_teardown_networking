@@ -1,0 +1,14 @@
+#!/bin/bash
+
+BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+. $BASEDIR/conf/settings
+
+kill -9 $(cat $BASEDIR/dhcp/dnsmasq.pid)
+rm -f dhcp/dnsmasq.pid
+
+ifconfig $BRIDGE down
+brctl delbr $BRIDGE
+
+iptables -t nat -D POSTROUTING -o $NET_OUT_IF -j MASQUERADE
+iptables -D FORWARD -i $NET_OUT_IF -o $BRIDGE -m state --state RELATED,ESTABLISHED -j ACCEPT
+iptables -D FORWARD -i $BRIDGE -o $NET_OUT_IF -j ACCEPT
