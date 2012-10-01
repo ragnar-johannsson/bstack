@@ -1,0 +1,18 @@
+#!/bin/bash
+
+BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+. $BASEDIR/conf/settings
+
+if [ ! -e $BASEDIR/lib/vms.created ]; then
+    echo "Found no VMs to delete."
+    exit 0
+fi
+
+for VM in $(cat $BASEDIR/lib/vms.created); do
+    virsh destroy $VM
+    virsh undefine $VM
+    rm -f $VOLUMEPATH/vols/$VM.qcow2
+done
+
+rm -f $BASEDIR/lib/vms.created
+cat /dev/null > $BASEDIR/dhcp/leases.txt

@@ -1,0 +1,17 @@
+
+# VM settings
+VM_NAME_PREFIX=test-vm-$RANDOM
+VM_MEMORY=131072
+VM_VCPUS=1
+
+# Template and volumes
+VOLUMEPATH=/mnt/iscsi-clvm/load-tests
+TEMPLATE_NAME=ubuntu-12.04-srv.qcow2
+TEMPLATE_USER=ubuntu
+
+# Networking
+BRIDGE=load-test
+NET_PRIV_GW=169.254.0.1
+NET_PRIV_RANGE=169.254.0.2,169.254.255.254
+NET_PRIV_NETMASK=255.255.0.0
+NET_OUT_IF=vbr0

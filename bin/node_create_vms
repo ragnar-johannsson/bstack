@@ -1,0 +1,46 @@
+#!/bin/bash
+
+BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+. $BASEDIR/conf/settings
+
+function generate_mac {
+    local hex="0123456789ABCDEF"
+    echo -n 0A:00 
+    for i in {1..8}; do
+        echo -n ${hex:$(($RANDOM%16)):1}
+    done | sed 's/\(..\)/:\1/g'
+}
+
+NUMBER=$1
+if [ -z "$NUMBER" ]; then
+    echo "Error: Missing number of instances. "
+    echo "Usage: node_create_vms <num>"
+    exit 1
+fi
+
+if [ ! -d $VOLUMEPATH/vols ]; then
+    mkdir $VOLUMEPATH/vols
+fi
+
+if [ ! -e $VOLUMEPATH/$TEMPLATE_NAME ]; then
+    echo "Error: Unable to find template $TEMPLATE_NAME"
+    exit 1
+fi
+
+for x in $(seq $NUMBER); do
+    NAME=$VM_NAME_PREFIX-$x
+    MACADDRESS=$(generate_mac)
+    qemu-img create -b $VOLUMEPATH/$TEMPLATE_NAME -f qcow2 $VOLUMEPATH/vols/$NAME.qcow2 > /dev/null 2>&1
+    sed -e 's/#NAME#/'"$NAME"'/' \
+        -e 's_#VOLUME-FILE#_'"$VOLUMEPATH/vols"'/'"$NAME"'.qcow2_' \
+        -e 's/#MAC_ADDRESS#/'"$MACADDRESS"'/' \
+        -e 's/#MEMORY#/'"$VM_MEMORY"'/' \
+        -e 's/#VCPUS#/'"$VM_VCPUS"'/' \
+        -e 's/#BRIDGE-NAME#/'"$BRIDGE"'/' $BASEDIR/lib/domain.xml >/tmp/domain-$NAME.xml
+    virsh define /tmp/domain-$NAME.xml > /dev/null 2>&1
+    virsh start $NAME > /dev/null 2>&1
+    echo $NAME >> $BASEDIR/lib/vms.created
+done
+
+virsh list --all
+
