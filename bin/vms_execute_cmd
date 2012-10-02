@@ -1,0 +1,17 @@
+#!/bin/bash
+
+BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+. $BASEDIR/conf/settings
+
+CMD="$1"
+if [ -z "$CMD" ]; then
+    echo "Error: Missing command. "
+    echo "Usage: vms_execute_command \"<cmd>\""
+    exit 1
+fi
+
+for VM in $(cat $BASEDIR/dhcp/leases.txt|awk '{print $3}'); do
+    (ssh -o LogLevel=QUIET -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null $TEMPLATE_USER@$VM "$CMD" &)
+done
+
+wait

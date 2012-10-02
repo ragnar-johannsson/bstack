@@ -1,0 +1,21 @@
+#!/bin/bash
+
+BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+. $BASEDIR/conf/settings
+
+FILE="$1"
+if [ -z "$FILE" ]; then
+    echo "Error: Missing file. "
+    echo "Usage: vms_download_file <file>"
+    exit 1
+fi
+
+if [ ! -d $BASEDIR/downloaded ]; then
+    mkdir $BASEDIR/downloaded
+fi
+
+for VM in $(cat $BASEDIR/dhcp/leases.txt|awk '{print $3}'); do
+    scp -o LogLevel=QUIET -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null $TEMPLATE_USER@$VM:$FILE $BASEDIR/downloaded/$FILE-$VM
+done
+
+echo "Files downloaded to $BASEDIR/downloaded"

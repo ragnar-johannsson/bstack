@@ -1,0 +1,15 @@
+#!/bin/bash
+
+BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+. $BASEDIR/conf/settings
+
+FILE="$1"
+if [ -z "$FILE" ]; then
+    echo "Error: Missing file. "
+    echo "Usage: vms_upload_file <file>"
+    exit 1
+fi
+
+for VM in $(cat $BASEDIR/dhcp/leases.txt|awk '{print $3}'); do
+    scp -o LogLevel=QUIET -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null $FILE $TEMPLATE_USER@$VM:
+done
