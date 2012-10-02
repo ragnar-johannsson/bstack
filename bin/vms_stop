@@ -1,0 +1,25 @@
+#!/bin/bash
+
+BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+. $BASEDIR/conf/settings
+
+CMD="shutdown"
+if [ ! -z "$1" ]; then
+    if [ "$1" == "--force" ]; then
+        CMD="destroy"
+    else
+        echo "Error: Unknown argument: $1"
+        exit 1
+    fi
+fi
+
+if [ ! -e $BASEDIR/lib/vms.created ]; then
+    echo "Found no VMs to reboot."
+    exit 0
+fi
+
+for VM in $(cat $BASEDIR/lib/vms.created); do
+    virsh $CMD $VM
+done
+
+cat /dev/null > $BASEDIR/dhcp/leases.txt

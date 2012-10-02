@@ -1,0 +1,14 @@
+#!/bin/bash
+
+BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+. $BASEDIR/conf/settings
+
+if [ ! -e $BASEDIR/lib/vms.created ]; then
+    echo "Found no VMs to reboot."
+    exit 0
+fi
+
+for VM in $(cat $BASEDIR/lib/vms.created); do
+    virsh start $VM
+done
+
