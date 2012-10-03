@@ -1,0 +1,24 @@
+#!/bin/bash
+
+BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+. $BASEDIR/conf/settings
+
+function listVms {
+    for MAC in $(cat $BASEDIR/dhcp/leases.txt|awk '{print $2}'); do
+        for VM in $(virsh list|awk '/running/ {print $2}'); do
+            local found=$(grep $MAC /var/run/libvirt/qemu/${VM}.xml)
+            if [ ! -z "$found" ]; then
+                printf "$VM \t $(grep $MAC $BASEDIR/dhcp/leases.txt|awk '{print $3}')\n"
+                break
+            fi
+        done
+    done
+}
+
+NUM=$(wc -l $BASEDIR/dhcp/leases.txt|awk '{print $1}');
+
+echo "Numer of VMs up and running: $NUM"
+echo
+
+listVms | sort
+
