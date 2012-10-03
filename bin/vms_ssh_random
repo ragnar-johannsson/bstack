@@ -1,0 +1,17 @@
+#!/bin/bash
+
+BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+. $BASEDIR/conf/settings
+
+RANGE=$(wc -l $BASEDIR/dhcp/leases.txt|awk '{print $1}')
+if [ "$RANGE" -eq "0" ]; then
+    echo "Error: Zero DHCP entries found"
+    exit 1
+fi
+
+let NUM=$RANDOM%$RANGE+1
+IP=$(head -$NUM $BASEDIR/dhcp/leases.txt|tail -1|awk '{print $3}')
+
+echo "Connecting to $IP"
+ssh -o LogLevel=QUIET -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null $TEMPLATE_USER@$IP
+
